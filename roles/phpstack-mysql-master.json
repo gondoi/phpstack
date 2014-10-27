@@ -12,7 +12,7 @@
   "run_list": [
     "recipe[platformstack::default]",
     "recipe[rackops_rolebook::default]",
-    "recipe[phpstack::mysql_base]"
+    "recipe[phpstack::mysql_master]"
   ],
   "env_run_lists": {
 

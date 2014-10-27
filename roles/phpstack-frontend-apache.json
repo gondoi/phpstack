@@ -10,6 +10,8 @@
   },
   "chef_type": "role",
   "run_list": [
+    "recipe[platformstack::default]",
+    "recipe[rackops_rolebook::default]",
     "recipe[phpstack::apache]"
   ],
   "env_run_lists": {
