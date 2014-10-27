@@ -1,0 +1,20 @@
+{
+  "name": "phpstack-varnish",
+  "description": "",
+  "json_class": "Chef::Role",
+  "default_attributes": {
+
+  },
+  "override_attributes": {
+
+  },
+  "chef_type": "role",
+  "run_list": [
+    "recipe[platformstack::default]",
+    "recipe[rackops_rolebook::default]",
+    "recipe[phpstack::varnish]"
+  ],
+  "env_run_lists": {
+
+  }
+}
