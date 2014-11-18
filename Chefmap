@@ -37,6 +37,7 @@ run-list:
   - platformstack::default
   - rackops_rolebook::default
   - phpstack::apache
+  - phpstack::mysql_master
 maps:
 - value: {{setting('demo')}}
   targets:
