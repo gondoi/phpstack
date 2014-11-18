@@ -8,18 +8,7 @@ blueprint:
       component:
         name: app
         type: application
-      constraints:
-      - omnibus-version: "11.16.4-1"
       display-name: PHP
-    lb:
-      component:
-        interface: http
-        type: load-balancer
-        constraints:
-        - algorithm: LEAST_CONNECTIONS
-      relations:
-        web: http
-      display-name: Load Balancer
   options:
     region:
       label: Region
@@ -34,6 +23,8 @@ blueprint:
         - ORD
         - LON
         - SYD
+        - HKG
+        - IAD
       constrains:
       - setting: region
         provider: load-balancer
@@ -87,7 +78,7 @@ blueprint:
       label: Number of Servers
       type: integer
       required: true
-      default: 2
+      default: 1
       description: The number of web servers to deploy
       help: |
         Required: The number of web servers to deploy.  Please specify a number
@@ -111,16 +102,16 @@ blueprint:
       help: |
         Required: The operating system for the host server.
       type: string
-      default: Ubuntu 12.04
+      default: Ubuntu 14.04
       display-hints:
         group: server
         order: 2
         list-type: compute.os
         choice:
-        - name: Ubuntu 12.04 LTS (Precise Pangolin) with PHP 5.3.10
-          value: Ubuntu 12.04
+        - name: Ubuntu 14.04 LTS (Precise Pangolin) with PHP 5.3.10
+          value: Ubuntu 14.04
       constraints:
-      - in: ["Ubuntu 12.04"]
+      - in: ["Ubuntu 14.04"]
         message: must be a supported operating system
       constrains:
       - resource_type: compute
@@ -366,6 +357,7 @@ environment:
     chef-server:
       constraints:
       - source: %repo_url%
+      - bootstrap-version: "11.16.4-1"
       vendor: opscode
     common:
       vendor: rackspace
@@ -374,9 +366,9 @@ environment:
 inputs:
   blueprint:
     url: http://app.example.com
-    os: Ubuntu 12.04
+    os: Ubuntu 14.04
     region: ORD
     server_size: 1024
     http_port: 80
     https_port: 443
-    server_count: 2
+    server_count: 1

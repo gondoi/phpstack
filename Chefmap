@@ -20,12 +20,12 @@ run-list:
   - phpstack::apache
   - phpstack::mysql_master
 maps:
-- value: {{setting('demo')}}
+- value: {{ setting('demo') }}
   targets:
   - attributes://phpstack/demo/enabled
 - value: {{ deployment.id }}
   targets:
   - attributes://phpstack/databag_name
-- value: {{setting('packages')}}
+- value: {{ setting('packages') }}
   targets:
   - attributes://php/packages
