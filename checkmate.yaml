@@ -1,0 +1,432 @@
+blueprint:
+  id: 9F9B82D5422348DC8AE010EEFF606BD1
+  description: Deploy a PHP application.
+  name: PHP
+  version: 1.0.0
+  services:
+    web:
+      component:
+        name: app
+        type: application
+      constraints:
+      - omnibus-version: "11.16.4-1"
+      display-name: PHP
+    lb:
+      component:
+        interface: http
+        type: load-balancer
+        constraints:
+        - algorithm: LEAST_CONNECTIONS
+      relations:
+        web: http
+      display-name: Load Balancer
+  options:
+    region:
+      label: Region
+      type: string
+      required: true
+      default: ORD
+      display-hints:
+        group: deployment
+        list-type: region
+        choice:
+        - DFW
+        - ORD
+        - LON
+        - SYD
+      constrains:
+      - setting: region
+        provider: load-balancer
+    url:
+      label: Site Address
+      description: 'The domain you wish to host your app on. (ex: example.com)'
+      help: |
+        Required: This is the domain you wish to host your application on.
+      type: url
+      required: true
+      default: http://example.com
+      display-hints:
+        group: application
+        order: 1
+        default-protocol: http
+        encrypted-protocols: [https]
+        sample: http://example.com
+      constraints:
+      - protocols: [http, https]
+        message: must be a valid web services port
+      - regex: '^([a-zA-Z]{2,}?\:\/\/[a-zA-Z0-9\-]+(?:\.[a-zA-Z0-9\-]+)*\.[a-zA-Z]{2,6}(?:\/?|(?:\/[\w\-]+)*)(?:\/?|\/\w+\.[a-zA-Z]{2,4}(?:\?[\w]+\=[\w\-]+)?)?(?:\&[\w]+\=[\w\-]+)*)$'
+        message: must be a valid web address
+      constrains:
+      - setting: allow_insecure
+        service: lb
+        resource_type: load-balancer
+        value: true  # turn on HTTP if protocol is HTTPS (provider handles it)
+      - setting: protocol
+        attribute: protocol
+        service: lb
+        resource_type: load-balancer
+      - setting: domain
+        service: lb
+        attribute: hostname
+      - setting: domain
+        service: web
+        attribute: hostname
+      - resource_type: application
+        service: web
+        setting: sslcacert
+        attribute: intermediate_key
+      - resource_type: application
+        service: web
+        setting: sslkey
+        attribute: ssl_private_key
+      - resource_type: application
+        service: web
+        setting: sslcert
+        attribute: ssl_certificate
+    server_count:
+      label: Number of Servers
+      type: integer
+      required: true
+      default: 2
+      description: The number of web servers to deploy
+      help: |
+        Required: The number of web servers to deploy.  Please specify a number
+        between 1-25
+      display-hints:
+        group: server
+        order: 1
+      constraints:
+      - greater-than-or-equal-to: 1
+        message: must be greater than or equal to 1
+      - less-than-or-equal-to: 25
+        message: must be less than or equal to 25
+      constrains:
+      - setting: count
+        service: web
+        resource_type: application
+    os:
+      label: Operating System
+      description: |
+        The operating system for the host server.
+      help: |
+        Required: The operating system for the host server.
+      type: string
+      default: Ubuntu 12.04
+      display-hints:
+        group: server
+        order: 2
+        list-type: compute.os
+        choice:
+        - name: Ubuntu 12.04 LTS (Precise Pangolin) with PHP 5.3.10
+          value: Ubuntu 12.04
+      constraints:
+      - in: ["Ubuntu 12.04"]
+        message: must be a supported operating system
+      constrains:
+      - resource_type: compute
+        service: web
+        setting: os
+    register-dns:
+      label: Create DNS A records
+      type: boolean
+      default: false
+      display-hints:
+        group: dns
+      constrains:
+      - service: lb
+        resource_type: load-balancer
+        setting: create_dns
+    server_size:
+      label: Server Size
+      description: The size of the web servers in MB of RAM.
+      help: |
+        Server sizes are based on amount of RAM allocated to the system. Disk
+        space will be dependent on server flavors available in the region
+        selected. By default, we will build the best performing server
+        available.
+      type: integer
+      default: 1024
+      display-hints:
+        group: server
+        order: 3
+        list-type: compute.memory
+        choice:
+        - name: 1 GB
+          value: 1024
+        - name: 2 GB
+          value: 2048
+        - name: 4 GB
+          value: 4096
+        - name: 8 GB
+          value: 8192
+        - name: 15 GB
+          value: 15360
+        - name: 30 GB
+          value: 30720
+      constraints:
+      - greater-than-or-equal-to: 1024
+        message: must be 1024 or larger
+      - less-than-or-equal-to: 30720
+        message: must be 30720 or smaller
+      constrains:
+      - setting: memory
+        service: web
+        resource_type: compute
+    repo:
+      label: "Git Repo URL"
+      description: "URL to Git repo of app to deploy"
+      help: |
+        Optional: URL to Git repo of the application you'd like to deploy.
+      type: string
+      display-hints:
+        group: application
+        order: 3
+      constrains:
+      - setting: repo
+        service: web
+        resource_type: application
+      constraints:
+      - regex: '^(.){0,1024}$'
+        message: url must be 1024 characters or shorter
+    packages:
+      description: |
+        Comma separated list of system packages to install.
+        Use this to install PHP modules your application needs.
+        Refer to http://packages.ubuntu.com/ for a list of package names.
+      help: |
+        Optional: Specify a comma separated list of system packages to install.
+        Use this to install PHP modules your application needs.
+        Refer to http://packages.ubuntu.com/ for a list of package names.
+      label: "PHP Packages"
+      type: string
+      display-hints:
+        group: application
+        order: 8
+        sample: "php5-gd, php5-mysql"
+      constrains:
+      - setting: packages
+        service: web
+        resource_type: application
+      constraints:
+      - regex: '^((.){0,2048})?$'
+        message: must be 2048 characters or shorter
+    http_port:
+      label: "HTTP Port"
+      description: "Port to listen on for HTTP requests."
+      type: integer
+      default: 80
+      display-hints:
+        group: application
+        order: 9
+      constrains:
+      - setting: http_port
+        service: web
+        resource_type: application
+      constraints:
+      - greater-than-or-equal-to: 1
+        message: must be greater than or equal to 1
+      - less-than-or-equal-to: 65535
+        message: must be less than or equal to 65535
+    https_port:
+      label: "HTTPS Port"
+      description: "Port to listen on for HTTPS requests."
+      type: integer
+      default: 443
+      display-hints:
+        group: application
+        order: 10
+      constrains:
+      - setting: https_port
+        service: web
+        resource_type: application
+      constraints:
+      - greater-than-or-equal-to: 1
+        message: must be greater than or equal to 1
+      - less-than-or-equal-to: 65535
+        message: must be less than or equal to 65535
+    demo:
+      label: "Enable Demo"
+      description: "Enable demo site for deployment."
+      type: boolean
+      default: true
+      constrains:
+      - setting: demo
+        service: web
+        resource_type: application
+
+    chef-server-url:
+      label: Chef Server Org URL
+      type: url
+      constrains:
+      - setting: server-url
+        provider: chef-server
+    chef-server-username:  # to create env, upload cookbooks, etc...
+      type: string
+      constrains:
+      - setting: server-username
+        provider: chef-server
+    chef-server-user-key:
+      type: text
+      constrains:
+      - setting: server-user-key
+        provider: chef-server
+    validator-pem:  # for bootstrapping
+      type: text
+      constrains:
+      - setting: validator-pem
+        provider: chef-server
+    validator-username:
+      type: string
+      constrains:
+      - setting: validator-username
+        provider: chef-server
+  meta-data:
+    schema-version: v0.7
+    application-name: PHP
+    application-version: 5
+    blueprint-type: Framework
+    flavor: Multiple Linux servers with PHP 5
+    flavor-weight: 2
+    heat-info:
+      porting: true
+      template-url: https://github.com/rackspace-orchestration-templates/php-app-multi
+    reach-info:
+      icon-20x20: https://600861890ddb34a8670a-744765205721eed93c384dae790e86aa.ssl.cf2.rackcdn.com/php-icon-20x20.png
+      tattoo: https://600861890ddb34a8670a-744765205721eed93c384dae790e86aa.ssl.cf2.rackcdn.com/php-tattoo.png
+      option-groups:
+      - application: "Application Options"
+      - server: "Server Options"
+      - load-balancer: "Load Balancer Options"
+      - dns: "DNS Options"
+    rackspace-supported: true
+  documentation:
+    abstract: |
+      Multiple [PHP 5](http://php.net/) servers with
+      [Apache](http://httpd.apache.org/), and
+      [Memcached](http://memcached.org/) behind a Cloud Load Balancer.
+
+      This deployment is intended for development and production use cases
+      incurring medium to high traffic scenarios. This deployment is easily
+      scalable and is appropriate for high traffic events.
+    instructions: |
+      #### Getting Started
+      If you're new to PHP, the [Getting
+      Started](http://www.php.net/manual/en/getting-started.php) page can walk
+      you through the basics of PHP and it's uses.
+
+      #### Logging in via SSH
+      The private key provided in the passwords section can be used to login as
+      root via SSH.  We have an article on how to use these keys with [Mac OS X
+      and
+      Linux](http://www.rackspace.com/knowledge_center/article/logging-in-with-a-ssh-private-key-on-linuxmac)
+      as well as [Windows using
+      PuTTY](http://www.rackspace.com/knowledge_center/article/logging-in-with-a-ssh-private-key-on-windows).
+
+      #### Deploying Your Code
+      If your deployment has multiple application servers, deployment tools such
+      as Capistrano, Phing, or even git can simplify the deployment process.
+      It's best to evaluate all options independently to determine which tool
+      works best for your use case. There are other methods for deployment
+      including using configuration and infrastructure management tools like
+      [Chef](http://docs.opscode.com/resource_deploy.html#deploy-strategies).
+
+      #### Details of Your Setup
+      This deployment was stood up using
+      [chef-solo](http://docs.opscode.com/chef_solo.html). Once the deployment
+      is up, chef will not run again, so it is safe to modify configurations.
+
+      [PHP](http://www.php.net/) was installed using the packaged version for
+      your operating system.  Newer versions of PHP will be available with newer
+      versions of the operating system.  We recommend using the packaged version
+      as opposed to a source based installation for easier long term
+      managmement, patching, and supportability.
+
+      All web content will be served by [Apache](http://httpd.apache.org/).  The
+      configuration can be found in /etc/apache2/sites-enabled.  The name of the
+      configuration file will be the same as the name of the site provided as a
+      part of this deployment.  Any changes made to this configuration will
+      require a restart of Apache.  By default, the Document Root for your site
+      will be /var/www/vhosts/application/.
+
+      #### Adding PHP Modules or Extensions
+      There are several options for adding support to PHP.  We recommend
+      leveraging as many packaged modules as possible.  Use the system package
+      manager to search for an install modules.  Here's an example of how to
+      search for availalbe modules of PHP 5 on Ubuntu:
+      ```bash
+      root@app01:~# apt-cache search php5-
+      php5-cgi - server-side, HTML-embedded scripting language (CGI binary)
+      php5-cli - command-line interpreter for the php5 scripting language
+      php5-common - Common files for packages built from the php5 source
+      php5-curl - CURL module for php5
+      php5-dbg - Debug symbols for PHP5
+      php5-dev - Files for PHP5 module development
+      php5-gd - GD module for php5
+      php5-gmp - GMP module for php5
+      php5-ldap - LDAP module for php5
+      php5-mysql - MySQL module for php5
+      ...
+      ```
+      Once you find the appropriate package, the package manager can be used to
+      handle the installation.  Here's an example on how we would install the
+      php5-gd package on Ubuntu:
+      ```bash
+      apt-get install -y php5-gd
+      ```
+      If you're looking to install something that is not found in the default
+      repositories, you can use [PECL](http://pecl.php.net/),
+      [PEAR](http://pear.php.net/), or
+      [phpize](http://php.net/manual/en/install.pecl.phpize.php) to complete the
+      installation.  Follow any instructions provided with the application you
+      are installing for more detail on how to best install the necessary
+      modules or extensions.
+
+      #### Updating PHP
+      Since the PHP installation was done using the package manager for the
+      operating system, the update can also be performed by the package manager.
+      If you're looking for a different major or minor version of PHP, you may
+      want to consider running a different version of the operating system.
+      Most operating systems lock in specific major, minor, and release
+      versions, and they only release updates for bugs or security fixes.
+
+      #### Scaling Out
+      If you'd like to grow this configuration, the easiest way would be to take
+      a snapshot of one of your PHP server and [build a new server with that
+      image](http://www.rackspace.com/knowledge_center/article/cloud-essentials-4-creating-an-image-backup-cloning-and-restoring-a-server-from-a-saved).
+      Once the new server is up, [add the new server to your load
+      balancer](http://www.rackspace.com/cloud/load-balancing/screenshots/).
+  display-outputs:
+    "Site Address":
+      type: url
+      source: options://url
+      extra-sources:
+        ipv4: "services://lb/interfaces/vip/ip_address"
+      order: 1
+      group: application
+    "Server Private Key":
+      type: private-key
+      source: "resources://deployment-keys/instance/private_key"
+      group: application
+      is-secret: true
+      order: 2
+environment:
+  description: This environment uses next-gen cloud servers.
+  name: Rackspace Open Cloud
+  providers:
+    chef-server:
+      constraints:
+      - source: %repo_url%
+      vendor: opscode
+    common:
+      vendor: rackspace
+    nova: {}
+    load-balancer: {}
+inputs:
+  blueprint:
+    url: http://app.example.com
+    os: Ubuntu 12.04
+    region: ORD
+    server_size: 1024
+    http_port: 80
+    https_port: 443
+    server_count: 2
