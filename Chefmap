@@ -13,25 +13,6 @@ options:
   "packages":
     label: "PHP Packages"
     type: string
-  "sslcert":
-    label: "SSL Certificate"
-    type: string
-  "sslkey":
-    label: "SSL Key"
-    type: string
-  "sslcacert":
-    label: "SSL CA Certificate"
-    type: string
-  "http_port":
-    label: "HTTP Port"
-    description: "Port to listen on for HTTP requests."
-    type: string
-    default: "80"
-  "https_port":
-    label: "HTTPS Port"
-    description: "Port to listen on for HTTPS requests."
-    type: string
-    default: "443"
 run-list:
   recipes:
   - platformstack::default
@@ -48,30 +29,3 @@ maps:
 - value: {{setting('packages')}}
   targets:
   - attributes://php/packages
-- value: {{setting('http_port')}}
-  targets:
-  - attributes://php_app/http_port
-- value: {{setting('https_port')}}
-  targets:
-  - attributes://php_app/https_port
-- value: |
-    {{ parse_url(setting('url')).certificate | indent(4) }}
-  targets:
-  - encrypted-databags://{{ deployment.id }}/secrets/php_app/sslcert
-- value: |
-    {{ parse_url(setting('url')).private_key | indent(4) }}
-  targets:
-  - encrypted-databags://{{ deployment.id }}/secrets/php_app/sslkey
-- value: |
-    {{ parse_url(setting('url')).intermediate_key | indent(4) }}
-  targets:
-  - encrypted-databags://{{ deployment.id }}/secrets/php_app/sslcacert
-- value: {{setting('public')}}
-  targets:
-  - attributes://php_app/public
-- value: {{setting('username')}}
-  targets:
-  - attributes://php_app/username
-- value: {{setting('group')}}
-  targets:
-  - attributes://php_app/group

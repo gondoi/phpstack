@@ -172,22 +172,6 @@ blueprint:
       - setting: memory
         service: web
         resource_type: compute
-    repo:
-      label: "Git Repo URL"
-      description: "URL to Git repo of app to deploy"
-      help: |
-        Optional: URL to Git repo of the application you'd like to deploy.
-      type: string
-      display-hints:
-        group: application
-        order: 3
-      constrains:
-      - setting: repo
-        service: web
-        resource_type: application
-      constraints:
-      - regex: '^(.){0,1024}$'
-        message: url must be 1024 characters or shorter
     packages:
       description: |
         Comma separated list of system packages to install.
@@ -210,40 +194,6 @@ blueprint:
       constraints:
       - regex: '^((.){0,2048})?$'
         message: must be 2048 characters or shorter
-    http_port:
-      label: "HTTP Port"
-      description: "Port to listen on for HTTP requests."
-      type: integer
-      default: 80
-      display-hints:
-        group: application
-        order: 9
-      constrains:
-      - setting: http_port
-        service: web
-        resource_type: application
-      constraints:
-      - greater-than-or-equal-to: 1
-        message: must be greater than or equal to 1
-      - less-than-or-equal-to: 65535
-        message: must be less than or equal to 65535
-    https_port:
-      label: "HTTPS Port"
-      description: "Port to listen on for HTTPS requests."
-      type: integer
-      default: 443
-      display-hints:
-        group: application
-        order: 10
-      constrains:
-      - setting: https_port
-        service: web
-        resource_type: application
-      constraints:
-      - greater-than-or-equal-to: 1
-        message: must be greater than or equal to 1
-      - less-than-or-equal-to: 65535
-        message: must be less than or equal to 65535
     demo:
       label: "Enable Demo"
       description: "Enable demo site for deployment."
