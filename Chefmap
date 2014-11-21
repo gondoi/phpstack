@@ -57,6 +57,78 @@ output:
           username: {{setting('username')}}
           # note host is written as output of a map
 
+--- # mongodb component definition
+id: mongodb
+is: database
+provides:
+- database: mongodb
+requires:
+- host: linux
+
+--- # postgres component definition
+id: postgres
+is: database
+provides:
+- database: postgres
+requires:
+- host: linux
+
+--- # varnish component definition
+id: varnish
+is: cache
+provides:
+- cache: varnish
+requires:
+- host: linux
+
+--- # memcache component definition
+id: memcache
+is: cache
+provides:
+- cache: memcache
+requires:
+- host: linux
+
+--- # redis component definition
+id: redis
+is: cache
+provides:
+- cache: redis
+requires:
+- host: linux
+
+--- # apache component definition
+id: apache
+is: web
+provides:
+- web: apache
+requires:
+- host: linux
+
+--- # nginx component definition
+id: nginx
+is: web
+provides:
+- web: nginx
+requires:
+- host: linux
+
+--- # new-relic component definition
+id: new-relic
+is: montoring
+provides:
+- monitoring: new-relic
+requires:
+- host: linux
+
+--- # gluster component definition
+id: gluster
+is: storage
+provides:
+- storage: gluster
+requires:
+- host: linux
+
 ---
 id: app
 name: app
@@ -70,7 +142,13 @@ supports:
 - database: mysql
 - database: mongodb
 - database: postgres
-
+- cache: varnish
+- cache: memcache
+- cache: redis
+- web: apache
+- web: nginx
+- monitoring: new-relic
+- storage: gluster
 options:
   "demo":
     label: "Enable Demo"
