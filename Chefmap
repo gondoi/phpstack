@@ -143,8 +143,10 @@ id: apache
 is: web
 provides:
 - web: apache
+- application: http
 supports:
 - cache:varnish
+- application:php
 requires:
 - host: linux
 options:
@@ -177,6 +179,7 @@ id: nginx
 is: web
 provides:
 - web: nginx
+- application: http
 requires:
 - host: linux
 run-list:
@@ -227,7 +230,7 @@ is: application
 requires:
 - host: linux
 provides:
-- application: http
+- application: php
 supports:
 - database: mysql
 - database: mongodb
