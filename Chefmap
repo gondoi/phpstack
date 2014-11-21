@@ -59,7 +59,7 @@ run-list:
   - rackops_rolebook::default
   - phpstack::mongodb_standalone
 maps:
--value: {{ setting('port') }}
+- value: {{ setting('port') }}
   targets:
   - attributes://mongodb/config/port
 
@@ -110,10 +110,10 @@ run-list:
   - rackops_rolebook::default
   - phpstack::memcache
 maps:
--value: {{ setting('port') }}
+- value: {{ setting('port') }}
   targets:
   - attributes://memcached/port
--value: {{ setting('monitoring') }}
+- value: {{ setting('monitoring') }}
   targets:
   - attributes://platformstack/cloud_monitoring/plugins/memcached/disable
 
