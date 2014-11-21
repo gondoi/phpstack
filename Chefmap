@@ -59,7 +59,7 @@ run-list:
   - rackops_rolebook::default
   - phpstack::mongodb_standalone
 maps:
--value: {{ settings('port') }}
+-value: {{ setting('port') }}
   targets:
   - attributes://mongodb/config/port
 
@@ -110,7 +110,7 @@ run-list:
   - rackops_rolebook::default
   - phpstack::memcache
 maps:
--value: {{ settings('port') }}
+-value: {{ setting('port') }}
   targets:
   - attributes://memcached/port
 -value: {{ setting('monitoring') }}
@@ -134,7 +134,7 @@ run-list:
   - rackops_rolebook::default
   - phpstack::redis_single
 maps:
-- value: {{ settings('port') }}
+- value: {{ setting('port') }}
   targets:
   - attributes://redis-multi/bind_port
 
@@ -168,9 +168,9 @@ run-list:
   - rackops_rolebook::default
   - phpstack::apache
 maps:
-- value: {{ settings(server_alias) }}
+- value: {{ setting(server_alias) }}
   targets:
-  - attributes://phpstack/apache/sites/{{ settings('server_name') }}/{{ settings('port') }}/server_alias
+  - attributes://phpstack/apache/sites/{{ setting('server_name') }}/{{ setting('port') }}/server_alias
 
 --- # nginx component definition
 id: nginx
@@ -202,7 +202,7 @@ run-list:
   - rackops_rolebook::default
   - phpstack::newrelic
 maps:
-- value: {{ settings('license') }}
+- value: {{ setting('license') }}
   targets:
   - attributes://newrelic/license
 
