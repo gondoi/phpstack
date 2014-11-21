@@ -1,11 +1,76 @@
+--- # mysql component definition
+id: mysql
+is: database
+provides:
+- database: mysql
+requires:
+- host: linux
+options:
+  "server_root_password":
+    type: password
+    default: =generate_password(min_length=12, required_chars=["0123456789", "abcdefghijklmnopqrstuvwxyz", "ABCDEFGHIJKLMNOPQRSTUVWXYZ"])
+    required: true
+  "database_name":
+    required: true
+    default: app_db
+  "username":
+    required: true
+    default: root
+  "password":
+    type: password
+    default: =generate_password(min_length=12, required_chars=["0123456789", "abcdefghijklmnopqrstuvwxyz", "ABCDEFGHIJKLMNOPQRSTUVWXYZ"])
+    required: true
+# Here are the provider settings and maps for this component
+run-list:
+  recipes:
+  - apt
+  - mysql::server
+  - holland
+  - holland::common
+  - holland::mysqldump
+maps:
+- value: {{deployment.id}} # Deployment ID needs to go to Node Attribute
+  targets:
+  - attributes://deployment/id
+- value: true
+  targets:
+  - encrypted-databags://{{deployment.id}}/{{app_id}}/wordpress/database/create_db
+  - encrypted-databags://{{deployment.id}}/{{app_id}}/wordpress/database/create_db_user
+- value: {{ setting('server_root_password') }}
+  targets:
+  - encrypted-databags://{{ deployment.id }}/{{ app_id }}/mysql/server_root_password
+  - outputs://instance:{{resource.index}}/instance/interfaces/mysql/root_password
+- source: requirements://host:linux/private_ip  # database is defined in component
+  targets:
+  - encrypted-databags://{{deployment.id}}/{{app_id}}/mysql/host
+  - outputs://instance:{{resource.index}}/instance/interfaces/mysql/host
+- value: {{ setting('database_name') }}
+  targets:
+  - encrypted-databags://{{deployment.id}}/{{app_id}}/mysql/database_name
+output:
+  'instance:{{resource.index}}':
+    instance:
+      interfaces:
+        mysql:
+          database_name: {{setting('database_name')}}
+          password: {{setting('password')}}
+          username: {{setting('username')}}
+          # note host is written as output of a map
+
 ---
 id: app
 name: app
 is: application
+
 requires:
 - host: linux
 provides:
 - application: http
+supports:
+- database: mysql
+- database: mongodb
+- database: postgres
+
 options:
   "demo":
     label: "Enable Demo"
