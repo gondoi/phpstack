@@ -253,7 +253,7 @@ run-list:
   recipes:
   - platformstack::default
   - rackops_rolebook::default
-  - phpstack::apache
+  - phpstack::application_php
   - phpstack::mysql_master
 maps:
 - value: {{ setting('demo') }}
