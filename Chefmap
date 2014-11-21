@@ -10,9 +10,6 @@ options:
     type: password
     default: =generate_password(min_length=12, required_chars=["0123456789", "abcdefghijklmnopqrstuvwxyz", "ABCDEFGHIJKLMNOPQRSTUVWXYZ"])
     required: true
-  "database_name":
-    required: true
-    default: app_db
   "username":
     required: true
     default: root
@@ -23,30 +20,18 @@ options:
 # Here are the provider settings and maps for this component
 run-list:
   recipes:
-  - apt
-  - mysql::server
-  - holland
-  - holland::common
-  - holland::mysqldump
+  - platformstack::default
+  - rackops_rolebook::default
+  - phpstack::mysql_master
 maps:
-- value: {{deployment.id}} # Deployment ID needs to go to Node Attribute
-  targets:
-  - attributes://deployment/id
-- value: true
-  targets:
-  - encrypted-databags://{{deployment.id}}/{{app_id}}/wordpress/database/create_db
-  - encrypted-databags://{{deployment.id}}/{{app_id}}/wordpress/database/create_db_user
 - value: {{ setting('server_root_password') }}
   targets:
-  - encrypted-databags://{{ deployment.id }}/{{ app_id }}/mysql/server_root_password
+  - attributes://mysql/server_root_password
   - outputs://instance:{{resource.index}}/instance/interfaces/mysql/root_password
 - source: requirements://host:linux/private_ip  # database is defined in component
   targets:
   - encrypted-databags://{{deployment.id}}/{{app_id}}/mysql/host
   - outputs://instance:{{resource.index}}/instance/interfaces/mysql/host
-- value: {{ setting('database_name') }}
-  targets:
-  - encrypted-databags://{{deployment.id}}/{{app_id}}/mysql/database_name
 output:
   'instance:{{resource.index}}':
     instance:
@@ -64,6 +49,19 @@ provides:
 - database: mongodb
 requires:
 - host: linux
+options:
+  port:
+    label: "Listening port"
+    type: integer
+run-list:
+  recipes:
+  - platformstack::default
+  - rackops_rolebook::default
+  - phpstack::mongodb_standalone
+maps:
+-value: {{ settings('port') }}
+  targets:
+  - attributes://mongodb/config/port
 
 --- # postgres component definition
 id: postgres
@@ -72,6 +70,11 @@ provides:
 - database: postgres
 requires:
 - host: linux
+run-list:
+  recipes:
+  - platformstack::default
+  - rackops_rolebook::default
+  - phpstack::postgresql_master
 
 --- # varnish component definition
 id: varnish
@@ -80,6 +83,11 @@ provides:
 - cache: varnish
 requires:
 - host: linux
+run-list:
+  recipes:
+  - platformstack::default
+  - rackops_rolebook::default
+  - phpstack::varnish
 
 --- # memcache component definition
 id: memcache
@@ -88,6 +96,26 @@ provides:
 - cache: memcache
 requires:
 - host: linux
+options:
+  port:
+    label: "Listening port"
+    type: integer
+  monitoring:
+    label: "Enable monitoring"
+    type: boolean
+    default: false
+run-list:
+  recipes:
+  - platformstack::default
+  - rackops_rolebook::default
+  - phpstack::memcache
+maps:
+-value: {{ settings('port') }}
+  targets:
+  - attributes://memcached/port
+-value: {{ setting('monitoring') }}
+  targets:
+  - attributes://platformstack/cloud_monitoring/plugins/memcached/disable
 
 --- # redis component definition
 id: redis
@@ -96,14 +124,53 @@ provides:
 - cache: redis
 requires:
 - host: linux
+options:
+  port:
+    label: "Listening port"
+    type: integer
+run-list:
+  recipes:
+  - platformstack::default
+  - rackops_rolebook::default
+  - phpstack::redis_single
+maps:
+- value: {{ settings('port') }}
+  targets:
+  - attributes://redis-multi/bind_port
 
 --- # apache component definition
 id: apache
 is: web
 provides:
 - web: apache
+supports:
+- cache:varnish
 requires:
 - host: linux
+options:
+  port:
+    label: "Listening port"
+    type: integer
+    default: 80
+  server_name:
+    label: "Site's domain name"
+    type: string
+    example: example.com
+  server_alias:
+    label: "Additional domain names to respond on"
+    type: array
+    example:
+    - www.example.com
+    - blog.example.com
+run-list:
+  recipes:
+  - platformstack::default
+  - rackops_rolebook::default
+  - phpstack::apache
+maps:
+- value: {{ settings(server_alias) }}
+  targets:
+  - attributes://phpstack/apache/sites/{{ settings('server_name') }}/{{ settings('port') }}/server_alias
 
 --- # nginx component definition
 id: nginx
@@ -112,14 +179,32 @@ provides:
 - web: nginx
 requires:
 - host: linux
+run-list:
+  recipes:
+  - platformstack::default
+  - rackops_rolebook::default
+  - phpstack::nginx
 
 --- # new-relic component definition
 id: new-relic
-is: montoring
+is: monitoring
 provides:
 - monitoring: new-relic
 requires:
 - host: linux
+options:
+  license:
+    label: "New Relic license key"
+    type: string
+run-list:
+  recipes:
+  - platformstack::default
+  - rackops_rolebook::default
+  - phpstack::newrelic
+maps:
+- value: {{ settings('license') }}
+  targets:
+  - attributes://newrelic/license
 
 --- # gluster component definition
 id: gluster
@@ -128,6 +213,11 @@ provides:
 - storage: gluster
 requires:
 - host: linux
+run-list:
+  recipes:
+  - platformstack::default
+  - rackops_rolebook::default
+  - phpstack::gluster
 
 ---
 id: app
